@@ -43,8 +43,9 @@ def celula_cheia(celula, max_celula):
     return len(celula[0]) == max_celula
 
 # Tenta reproduzir bacterias
+# retorno: para além do cap, retorna True se conseguiu reproduzir, False caso contrário
 def reproduz(bacteria_pai, celula, max_celula, comida_inicial_bacteria, cap, tempo_atual, TD, TR, TA, TM):
-    if(celula_cheia(celula, max_celula)):
+    if celula_cheia(celula, max_celula):
         return cap, False
     
     especie = especie_bacteria(bacteria_pai)
@@ -53,10 +54,9 @@ def reproduz(bacteria_pai, celula, max_celula, comida_inicial_bacteria, cap, tem
     for bacteria in celula[0]:
         if(especie_bacteria(bacteria) == especie):
             num_bacterias_especie += 1
-    
-    bacteria = cria_bacteria(especie, comida_inicial_bacteria, linha_bacteria(bacteria_pai),coluna_bacteria(bacteria_pai))
 
     if(num_bacterias_especie >= 2):
+        bacteria = cria_bacteria(especie, comida_inicial_bacteria, linha_bacteria(bacteria_pai),coluna_bacteria(bacteria_pai))
         adiciona_bacteria(celula, bacteria, max_celula)
         cap = adicionar_evento(cap, cria_evento(exp_random(TD)+tempo_atual, "Deslocamento", bacteria))
         cap = adicionar_evento(cap, cria_evento(exp_random(TR)+tempo_atual, "Reproducao", bacteria))

@@ -19,6 +19,3 @@ def elimina_evento(cap):
         return False
     return cap[1:]
 
-def mostra_eventos(cap):
-    for evento in cap:
-        print(tempo_evento(evento), tipo_evento(evento), bacteria_evento(evento))
