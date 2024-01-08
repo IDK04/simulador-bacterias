@@ -28,23 +28,26 @@ def desloca_bacteria(grelha, bacteria, deslocamento_maximo, max_celula):
     deslocamento_linha = unif_random(-deslocamento_maximo, deslocamento_maximo)
     deslocamento_coluna = unif_random(-deslocamento_maximo, deslocamento_maximo)
 
-    linha_bacteria, coluna_bacteria = posicao_bacteria(bacteria)
-    nova_linha = (linha_bacteria + deslocamento_linha) % len(grelha)
-    nova_coluna = (coluna_bacteria + deslocamento_coluna) % len(grelha)
+    linha = linha_bacteria(bacteria)
+    coluna = coluna_bacteria(bacteria)
+    nova_linha = (linha + deslocamento_linha) % len(grelha)
+    nova_coluna = (coluna + deslocamento_coluna) % len(grelha)
 
     nova_celula = grelha[nova_linha][nova_coluna]
-    if(celula_cheia(nova_celula, max_celula)):
+    if celula_cheia(nova_celula, max_celula) or (linha==nova_linha and coluna==nova_coluna):
         return False
 
-    remove_bacteria(grelha[linha_bacteria][coluna_bacteria], bacteria)
+    remove_bacteria(grelha[linha][coluna], bacteria)
     altera_posicao(bacteria, nova_linha, nova_coluna)
     adiciona_bacteria(nova_celula, bacteria, max_celula)
 
     return True
 
 # Alimenta as bactérias de tipo A
+# retorna a espécie morta
 def alimenta_a(grelha, bacteria):
-    linha, coluna = posicao_bacteria(bacteria)
+    linha = coluna_bacteria(bacteria)
+    coluna = coluna_bacteria(bacteria)
     celula = grelha[linha][coluna]
     bacterias_b_c = []
     for bact in bacterias_celula(celula):
@@ -54,31 +57,31 @@ def alimenta_a(grelha, bacteria):
     if len(bacterias_b_c) >= 1:
         bacteria_alimento = bacterias_b_c[unif_random(0, len(bacterias_b_c)-1)]
         remove_bacteria(celula, bacteria_alimento)
-        desativa_bacteria(bacteria_alimento)
-        return
+        return especie_bacteria(bacteria_alimento)
     
     if(comida_bacteria(bacteria)>=1):
         alimenta_de_bacteria(bacteria)
-        return
+        return -1
     
     remove_bacteria(celula, bacteria)
-    desativa_bacteria(bacteria)
-
+    return A
 
 # Alimenta as bactérias B e C
+# retorna True se morreu, False caso contrario
 def alimenta_b_c(grelha, bacteria):
-    linha, coluna = posicao_bacteria(bacteria)
+    linha = coluna_bacteria(bacteria)
+    coluna = coluna_bacteria(bacteria)
     celula = grelha[linha][coluna]
     if (comida_celula(celula) >= 1):
         alimenta_de_celula(celula)
-        return
+        return False
     
     if(comida_bacteria(bacteria)>=1):
         alimenta_de_bacteria(bacteria)
-        return
+        return False
     
     remove_bacteria(celula, bacteria)
-    desativa_bacteria(bacteria)
+    return True
 
 # Retorna uma celula  
 def celula_grelha(grelha, linha, coluna):

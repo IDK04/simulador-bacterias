@@ -15,11 +15,17 @@ def alimenta_de_bacteria(bacteria):
 def bacteria_ativa(bacteria):
     return bacteria[2]
 
+def ativa_bacteria(bacteria):
+    bacteria[2] = True
+
 def desativa_bacteria(bacteria):
     bacteria[2] = False
 
 def altera_posicao(bacteria, linha, coluna):
     bacteria[3] = [linha, coluna]
 
-def posicao_bacteria(bacteria):
-    return bacteria[3]
+def linha_bacteria(bacteria):
+    return bacteria[3][0]
+
+def coluna_bacteria(bacteria):
+    return bacteria[3][1]
