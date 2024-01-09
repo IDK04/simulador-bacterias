@@ -1,7 +1,9 @@
-from cap import *
-from evento import *
-from obsrandom import *
-from grelha import *
+import cap as cp
+import evento
+import obsrandom
+import grelha as gr
+import bacteria as bct
+import celula as cel
 import matplotlib.pyplot as plt
 
 A = 0
@@ -10,32 +12,35 @@ C = 2
 
 # Distribui bacterias do tipo "especie" pela grelha e retorna o cap com os
 # eventos default de cada bacteria
-def distribui_bacterias(especie, n_bacterias, comida_inicial_bacteria, posicoes_livres, grelha, max_celula, cap):
+def distribui_bacterias(especie, n_bacterias, comida_inicial_bacteria, posicoes_livres, grelha, max_celula, cap, id_atual):
     for i in range(n_bacterias):
 
         # Se já não houver posições disponiveis
         if (len(posicoes_livres) == 0):
             return cap
         
-        linha, coluna = posicoes_livres[unif_random(0, len(posicoes_livres)-1)]
-        celula = celula_grelha(grelha, linha, coluna)
-        bacteria = cria_bacteria(especie, comida_inicial_bacteria, linha, coluna)
-        adiciona_bacteria(celula, bacteria, max_celula)
+        linha, coluna = posicoes_livres[obsrandom.unif_random(0, len(posicoes_livres)-1)]
+        celula = gr.celula_grelha(grelha, linha, coluna)
+        bacteria = bct.cria_bacteria(especie, comida_inicial_bacteria, linha, coluna, id_atual)
+        id_atual += 1
+        cel.adiciona_bacteria(celula, bacteria, max_celula)
 
-        cap = adicionar_evento(cap, cria_evento(exp_random(TD), "Deslocamento", bacteria))
-        cap = adicionar_evento(cap, cria_evento(exp_random(TR), "Reproducao", bacteria))
-        cap = adicionar_evento(cap, cria_evento(exp_random(TA), "Alimentacao", bacteria))
-        cap = adicionar_evento(cap, cria_evento(exp_random(TM), "Morte", bacteria))
+        cap = cp.adicionar_evento(cap, evento.cria_evento(obsrandom.exp_random(TD), "Deslocamento", bacteria))
+        cap = cp.adicionar_evento(cap, evento.cria_evento(obsrandom.exp_random(TR), "Reproducao", bacteria))
+        cap = cp.adicionar_evento(cap, evento.cria_evento(obsrandom.exp_random(TA), "Alimentacao", bacteria))
+        cap = cp.adicionar_evento(cap, evento.cria_evento(obsrandom.exp_random(TM), "Morte", bacteria))
 
         # Verifica se a célula já está cheia
-        if(celula_cheia(celula, max_celula)):
+        if(cel.celula_cheia(celula, max_celula)):
             posicoes_livres.remove([linha, coluna])
 
     return cap
 
 def simulador(N, NA, NB, NC, TS, TD, K, TR, TA, TM, TRP, F, Q):
 
-    grelha = cria_grelha(N, 1)
+    id_atual = 0
+
+    grelha = gr.cria_grelha(N, 1)
 
     bacterias_A = [NA]
     bacterias_B = [NB]
@@ -56,44 +61,47 @@ def simulador(N, NA, NB, NC, TS, TD, K, TR, TA, TM, TRP, F, Q):
         for j in range(N):
             posicoes_livres.append([i, j])
 
-    cap = criar_cap()
+    cap = cp.criar_cap()
     tempo_atual = 0
     tempo_maximo = TS
 
-    cap = distribui_bacterias(A, NA, F, posicoes_livres, grelha, Q, cap)
-    cap = distribui_bacterias(B, NB, F, posicoes_livres, grelha, Q, cap)
-    cap = distribui_bacterias(C, NC, F, posicoes_livres, grelha, Q, cap)
+    cap = distribui_bacterias(A, NA, F, posicoes_livres, grelha, Q, cap, id_atual)
+    id_atual += NA+1
+    cap = distribui_bacterias(B, NB, F, posicoes_livres, grelha, Q, cap, id_atual)
+    id_atual += NB +1
+    cap = distribui_bacterias(C, NC, F, posicoes_livres, grelha, Q, cap, id_atual)
+    id_atual += NC + 1
 
     # Inicializa o evento de reposição
-    cap = adicionar_evento(cap, cria_evento(exp_random(TM), "Reposicao", 0))
+    cap = cp.adicionar_evento(cap, evento.cria_evento(obsrandom.exp_random(TM), "Reposicao", 0))
 
-    evento_atual = proximo_evento(cap)
-    bacteria_atual = bacteria_evento(evento_atual)
-    tempo_atual = tempo_evento(evento_atual)
-    cap = elimina_evento(cap)
+    evento_atual = cp.proximo_evento(cap)
+    bacteria_atual = evento.bacteria_evento(evento_atual)
+    tempo_atual = evento.tempo_evento(evento_atual)
+    cap = cp.elimina_evento(cap)
 
-    while tempo_atual <= tempo_maximo:
+    while tempo_atual <= tempo_maximo and len(cap)>0:
 
         # Bactéria ser diferente de 0 quer dizer que existe bactéria
         # (há um evento que não leva bacteria, sem esta condiçao dava erro)
-        if bacteria_atual != 0 and bacteria_ativa(bacteria_atual):
-            celula_bacteria = celula_grelha(grelha, linha_bacteria(bacteria_atual), coluna_bacteria(bacteria_atual))
-            if tipo_evento(evento_atual) == "Morte":
-                remove_bacteria(celula_bacteria, bacteria_atual)
-                if especie_bacteria(bacteria_atual) == A:
+        if bacteria_atual != 0 and bct.bacteria_ativa(bacteria_atual):
+            celula_bacteria = gr.celula_grelha(grelha, bct.linha_bacteria(bacteria_atual), bct.coluna_bacteria(bacteria_atual))
+            if evento.tipo_evento(evento_atual) == "Morte":
+                cel.remove_bacteria(celula_bacteria, bacteria_atual)
+                if bct.especie_bacteria(bacteria_atual) == A:
                     num_A -= 1
-                elif especie_bacteria(bacteria_atual) == B:
+                elif bct.especie_bacteria(bacteria_atual) == B:
                     num_B -= 1
-                elif especie_bacteria(bacteria_atual) == C:
+                elif bct.especie_bacteria(bacteria_atual) == C:
                     num_C -= 1
 
-            elif tipo_evento(evento_atual) == "Deslocamento":
-                desloca_bacteria(grelha, bacteria_atual, K, Q)
-                cap = adicionar_evento(cap, cria_evento(tempo_atual+exp_random(TD), "Deslocamento", bacteria_atual))
+            elif evento.tipo_evento(evento_atual) == "Deslocamento":
+                gr.desloca_bacteria(grelha, bacteria_atual, K, Q)
+                cap = cp.adicionar_evento(cap, evento.cria_evento(tempo_atual+obsrandom.exp_random(TD), "Deslocamento", bacteria_atual))
 
-            elif tipo_evento(evento_atual) == "Alimentacao":
-                if especie_bacteria(bacteria_atual) == A:
-                    especie_morta = alimenta_a(grelha, bacteria_atual)
+            elif evento.tipo_evento(evento_atual) == "Alimentacao":
+                if bct.especie_bacteria(bacteria_atual) == A:
+                    especie_morta = gr.alimenta_a(grelha, bacteria_atual)
                     if especie_morta == A:
                         num_A -= 1
                     elif especie_morta == B:
@@ -101,31 +109,32 @@ def simulador(N, NA, NB, NC, TS, TD, K, TR, TA, TM, TRP, F, Q):
                     elif especie_morta == C:
                         num_C -= 1
                 else:
-                    if alimenta_b_c(grelha, bacteria_atual):
+                    if gr.alimenta_b_c(grelha, bacteria_atual):
                         # Morreu
-                        if especie_bacteria(bacteria_atual) == B:
+                        if bct.especie_bacteria(bacteria_atual) == B:
                             num_B -= 1
-                        elif especie_bacteria(bacteria_atual) == C:
+                        elif bct.especie_bacteria(bacteria_atual) == C:
                             num_C -= 1
 
-                cap = adicionar_evento(cap, cria_evento(tempo_atual+exp_random(TA), "Alimentacao", bacteria_atual))
+                cap = cp.adicionar_evento(cap, evento.cria_evento(tempo_atual+obsrandom.exp_random(TA), "Alimentacao", bacteria_atual))
             
-            elif tipo_evento(evento_atual) == "Reproducao":
-                cap, conseguiu_reproduzir = reproduz(bacteria_atual, celula_bacteria, Q, F, cap, tempo_atual, TD, TR, TA, TM)
+            elif evento.tipo_evento(evento_atual) == "Reproducao":
+                cap, conseguiu_reproduzir = cel.reproduz(bacteria_atual, celula_bacteria, Q, F, cap, tempo_atual, TD, TR, TA, TM, id_atual)
                 if conseguiu_reproduzir:
-                    if especie_bacteria(bacteria_atual) == A:
+                    id_atual += 1
+                    if bct.especie_bacteria(bacteria_atual) == A:
                         num_A += 1
-                    elif especie_bacteria(bacteria_atual) == B:
+                    elif bct.especie_bacteria(bacteria_atual) == B:
                         num_B += 1
-                    elif especie_bacteria(bacteria_atual) == C:
+                    elif bct.especie_bacteria(bacteria_atual) == C:
                         num_C += 1
 
-                cap = adicionar_evento(cap, cria_evento(tempo_atual+exp_random(TR), "Reproducao", bacteria_atual))
+                cap = cp.adicionar_evento(cap, evento.cria_evento(tempo_atual+obsrandom.exp_random(TR), "Reproducao", bacteria_atual))
 
         # Evento geral
-        if bacteria_atual == 0 and tipo_evento(evento_atual) == "Reposicao":
-            repoe_alimento(grelha)
-            cap = adicionar_evento(cap, cria_evento(tempo_atual+exp_random(TRP), "Reposicao", 0))
+        if bacteria_atual == 0 and evento.tipo_evento(evento_atual) == "Reposicao":
+            gr.repoe_alimento(grelha)
+            cap = cp.adicionar_evento(cap, evento.cria_evento(tempo_atual+obsrandom.exp_random(TRP), "Reposicao", 0))
 
         tempos_A.append(tempo_atual)
         tempos_B.append(tempo_atual)
@@ -135,14 +144,11 @@ def simulador(N, NA, NB, NC, TS, TD, K, TR, TA, TM, TRP, F, Q):
         bacterias_B.append(num_B)
         bacterias_C.append(num_C)
 
-        evento_atual = proximo_evento(cap)
-        bacteria_atual = bacteria_evento(evento_atual)
-        tempo_atual = tempo_evento(evento_atual)
-        cap = elimina_evento(cap)
-
-        if(len(cap) == 0):
-            break
-
+        evento_atual = cp.proximo_evento(cap)
+        bacteria_atual = evento.bacteria_evento(evento_atual)
+        tempo_atual = evento.tempo_evento(evento_atual)
+        cap = cp.elimina_evento(cap)
+    
     plt.plot(tempos_A, bacterias_A, label = 'A')
     plt.plot(tempos_B, bacterias_B, label = 'B')
     plt.plot(tempos_C, bacterias_C, label = 'C')

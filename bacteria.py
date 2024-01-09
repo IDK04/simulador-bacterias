@@ -1,13 +1,16 @@
 # A bactéria consiste numa lista com a sua espécie, comida,
 # um bool para saber se está ativa e a sua posiçao atual.
-def cria_bacteria(especie, comida_inicial_bacteria, linha, coluna):
-    return [especie, comida_inicial_bacteria, True, [linha, coluna]]
+def cria_bacteria(especie, comida_inicial_bacteria, linha, coluna, id):
+    return [especie, comida_inicial_bacteria, True, [linha, coluna], id]
 
 def especie_bacteria(bacteria):
     return bacteria[0]
 
 def comida_bacteria(bacteria):
     return bacteria[1]
+
+def id_bacteria(bacteria):
+    return bacteria[4]
 
 def alimenta_de_bacteria(bacteria):
     bacteria[1] -= 1
